@@ -1,0 +1,12 @@
+{
+    "proveedor_1":{
+        "fecha_1": {"se_paga": 0,"se_descuenta": 0},
+        "fecha_2": {"se_paga": 0,"se_descuenta": 0},
+        "fecha_3": {"se_paga": 0,"se_descuenta": 0}
+    },
+    "proveedor_2":{
+        "fecha_1": {"se_paga": 0,"se_descuenta": 0},
+        "fecha_2": {"se_paga": 0,"se_descuenta": 0},
+        "fecha_3": {"se_paga": 0,"se_descuenta": 0}
+    }
+}
