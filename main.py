@@ -10,6 +10,7 @@ import pandas as pd
 import requests
 from datetime import date, datetime, timedelta
 from pprint import pprint
+import collections
 
 def get_feriados_string_list():
     x = requests.get('https://api.victorsanmartin.com/feriados/en.json')
@@ -80,30 +81,41 @@ def get_observacion_documentos(row):
 
 
 def update_resumen_proveedor(resumen_proveedor):
+    pprint(resumen_provedor)
     new_resumen_proveedor = {}
     se_paga_from_past_date = 0
     se_descuenta_from_past_date = 0
     today = date.today()
+    resumen_proveedor = collections.OrderedDict(sorted(resumen_proveedor.items()))
     for fecha_de_pago, montos in resumen_proveedor.items():
-        fecha_de_pago_date_object = datetime.strptime(fecha_de_pago, "%d-%m-%Y").date()
+        print('fecha_de_pago: ', fecha_de_pago)
+        print('monto se paga: ', resumen_proveedor[f'{fecha_de_pago}']['se_paga'])
+        print('monto se descuenta: ', resumen_proveedor[f'{fecha_de_pago}']['se_descuenta'])
+        print('')
+        fecha_de_pago_date_object = datetime.strptime(fecha_de_pago, "%Y-%m-%d").date()
         if(today > fecha_de_pago_date_object):
             print(f'{fecha_de_pago} is a past date (today is {today}). add amounts to the next one')
             se_paga_from_past_date += montos['se_paga']
             se_descuenta_from_past_date += montos['se_descuenta']
         else:
+            fecha_de_pago_date_object = datetime.strptime(fecha_de_pago, '%Y-%m-%d').date()
+            new_fecha_de_pago = fecha_de_pago_date_object.strftime('%d-%m-%Y')
             new_se_paga = resumen_proveedor[f'{fecha_de_pago}']['se_paga'] + se_paga_from_past_date
             new_se_descuenta = resumen_proveedor[f'{fecha_de_pago}']['se_descuenta'] + se_descuenta_from_past_date
-            new_resumen_proveedor[f'{fecha_de_pago}'] = {
+            new_resumen_proveedor[f'{new_fecha_de_pago}'] = {
                 'se_paga': new_se_paga,
                 'se_descuenta': new_se_descuenta
             }
             se_paga_from_past_date = 0
             se_descuenta_from_past_date = 0
+        print('new_resumen_proveedor: ')
+        pprint(new_resumen_proveedor)
+        print('')
 
     return new_resumen_proveedor
 
 current_year = date.today().year #para encontrar los feriados del año
-facturas_proveedores_df = pd.read_excel('proveedores-raw-10000.xlsx', index_col=0)
+facturas_proveedores_df = pd.read_excel('proveedores-raw.xlsx', index_col=0)
 #response = r = requests.get('https://apis.digital.gob.cl/fl/feriados')
 #feriados_object = response.json()
 proveedores = facturas_proveedores_df['Nombre del Proveedor'].dropna().unique()
@@ -128,13 +140,14 @@ for nit_proveedor in nit_list:
     # for each proveedor, filter dataframe with df.loc[df['Nombre del Proveedor'] == nombre_del_proveedor]
     proveedor_df = facturas_proveedores_df.loc[(facturas_proveedores_df['Nit de Proveedor'] == nit_proveedor) | (facturas_proveedores_df['Nit de Cliente'] == nit_proveedor)]
     proveedor_df = proveedor_df.reset_index()
-    print(proveedor_df)
     # mark 'Se paga' or 'Se descuenta' in each row based on clase de documento
     proveedor_df['PLAZO'] = ""
     proveedor_df['OBSERVACIÓN DOCUMENTOS'] = proveedor_df.apply(get_observacion_documentos, axis=1)
     # get list of paying dates
     fecha_de_pago_list = proveedor_df['FECHA DE PAGO REAL'].dropna().unique()
     for fecha_de_pago in fecha_de_pago_list:
+        fecha_de_pago_date_object = datetime.strptime(fecha_de_pago, '%d-%m-%Y').date()
+        fecha_de_pago = fecha_de_pago_date_object.strftime('%Y-%m-%d')
         resumen_provedor[f'{fecha_de_pago}'] = {
             'se_paga': 0,
             'se_descuenta': 0
@@ -142,11 +155,18 @@ for nit_proveedor in nit_list:
     # for each factura check if amount is 'se_paga' or 'se_descuenta'
     for index, row in proveedor_df.iterrows():
         fecha_de_pago_row = row['FECHA DE PAGO REAL']
+        fecha_de_pago_date_object = datetime.strptime(fecha_de_pago_row, '%d-%m-%Y').date()
+        fecha_de_pago_row = fecha_de_pago_date_object.strftime('%Y-%m-%d')
+
         monto_factura = row['Importe en moneda local']
         if(get_observacion_documentos(row) == 'Se paga'):
             resumen_provedor[f'{fecha_de_pago_row}']['se_paga'] = resumen_provedor[f'{fecha_de_pago_row}']['se_paga'] + monto_factura
         else:
             resumen_provedor[f'{fecha_de_pago_row}']['se_descuenta'] = resumen_provedor[f'{fecha_de_pago_row}']['se_descuenta'] + monto_factura
+    if(nit_proveedor == '96999930-7'):
+        print(f'resumen KITCHEN CENTER SPA: ')
+        pprint(resumen_provedor)
+        print('')
     # print(proveedor_df)
     proveedor_dataframe_list.append(proveedor_df)
     resumen_proveedores[nit_nombre_proveedor_map[f'{nit_proveedor}']] = resumen_provedor
@@ -165,7 +185,8 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
 
     # check in resumen_provedor that all fechas_de_pago are valid
     # if a fecha_de_pago has passed, take se_paga and se_descuenta amounts and add them to the next valid fecha_de_pago
-    resumen_provedor = update_resumen_proveedor(resumen_provedor)
+    if(proveedor == 'KITCHEN CENTER SPA'):
+        resumen_provedor = update_resumen_proveedor(resumen_provedor)
 
     for fecha_de_pago, montos in resumen_provedor.items():
         monto_total_se_descuenta += montos['se_descuenta']
@@ -185,7 +206,8 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
 
 
     proveedor_matrix = header_matrix + new_rows_matrix
-    pprint(proveedor_matrix)
+    if(proveedor == 'KITCHEN CENTER SPA'):
+        pprint(proveedor_matrix)
     # create dataframe with proveedor_matrix
     proveedor_summary_dataframe = pd.DataFrame(proveedor_matrix)
     proveedor_summary_dataframe_list.append(proveedor_summary_dataframe)
