@@ -64,7 +64,7 @@ def get_observacion_documentos(row):
         return 'Se descuenta'
 
 current_year = date.today().year #para encontrar los feriados del año
-facturas_proveedores_df = pd.read_excel('proveedores-raw.xlsx', index_col=0)
+facturas_proveedores_df = pd.read_excel('proveedores-raw-10000.xlsx', index_col=0)
 #response = r = requests.get('https://apis.digital.gob.cl/fl/feriados')
 #feriados_object = response.json()
 proveedores = facturas_proveedores_df['Nombre del Proveedor'].dropna().unique()
