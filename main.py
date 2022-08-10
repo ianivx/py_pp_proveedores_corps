@@ -63,6 +63,30 @@ def get_observacion_documentos(row):
     else:
         return 'Se descuenta'
 
+
+def update_resumen_proveedor(resumen_proveedor):
+    new_resumen_proveedor = {}
+    se_paga_from_past_date = 0
+    se_descuenta_from_past_date = 0
+    today = date.today()
+    for fecha_de_pago, montos in resumen_proveedor.items():
+        fecha_de_pago_date_object = datetime.strptime(fecha_de_pago, "%d-%m-%Y").date()
+        if(today > fecha_de_pago_date_object):
+            print(f'{fecha_de_pago} is a past date (today is {today}). add amounts to the next one')
+            se_paga_from_past_date += montos['se_paga']
+            se_descuenta_from_past_date += montos['se_descuenta']
+        else:
+            new_se_paga = resumen_proveedor[f'{fecha_de_pago}']['se_paga'] + se_paga_from_past_date
+            new_se_descuenta = resumen_proveedor[f'{fecha_de_pago}']['se_descuenta'] + se_descuenta_from_past_date
+            new_resumen_proveedor[f'{fecha_de_pago}'] = {
+                'se_paga': new_se_paga,
+                'se_descuenta': new_se_descuenta
+            }
+            se_paga_from_past_date = 0
+            se_descuenta_from_past_date = 0
+
+    return new_resumen_proveedor
+
 current_year = date.today().year #para encontrar los feriados del año
 facturas_proveedores_df = pd.read_excel('proveedores-raw-10000.xlsx', index_col=0)
 #response = r = requests.get('https://apis.digital.gob.cl/fl/feriados')
@@ -123,6 +147,11 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
     header_matrix = [empty_row, empty_row, [proveedor, '', '', ''], ['Vencimientos', 'Se paga', 'Se descuenta', 'Total']]
     new_rows_matrix = []
     monto_total_se_descuenta = 0
+
+    # check in resumen_provedor that all fechas_de_pago are valid
+    # if a fecha_de_pago has passed, take se_paga and se_descuenta amounts and add them to the next valid fecha_de_pago
+    resumen_provedor = update_resumen_proveedor(resumen_provedor)
+
     for fecha_de_pago, montos in resumen_provedor.items():
         monto_total_se_descuenta += montos['se_descuenta']
         monto_se_descuenta= ''
@@ -131,11 +160,13 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
         if(monto_se_paga != 0):
             new_row = [fecha_de_pago, monto_se_paga, monto_se_descuenta, -monto_total]
             new_rows_matrix.append(new_row)
-    # set to first row (4th element) of summary monto total de descuento and new monto total
+    # set to first row  of summary monto total de descuento and new monto total
     new_rows_matrix[0][2] = monto_total_se_descuenta
     first_row_monto_se_paga = new_rows_matrix[0][1]
-    first_row_monto_se_descuenta = new_rows_matrix[0][2]  
-    new_rows_matrix[0][3] =(first_row_monto_se_paga - first_row_monto_se_descuenta)*-1
+    first_row_monto_se_descuenta = new_rows_matrix[0][2]
+    new_rows_matrix[0][3] =(first_row_monto_se_paga + first_row_monto_se_descuenta)*-1
+
+    
 
 
     proveedor_matrix = header_matrix + new_rows_matrix
