@@ -11,10 +11,24 @@ import requests
 from datetime import date, datetime, timedelta
 from pprint import pprint
 
-#TODO
+def get_feriados_string_list():
+    x = requests.get('https://api.victorsanmartin.com/feriados/en.json')
+    response = x.json()
+    feriados_object_list = response['data']
+    feriados_date_list = []
+    for feriado_object in feriados_object_list:
+        feriado_string = feriado_object['date']
+        feriado_date_object = datetime.strptime(feriado_string, "%Y-%m-%d").date()
+        feriados_date_list.append(feriado_date_object)
+    feriados_string_list = list(map(lambda x: x.strftime('%d-%m-%Y'), feriados_date_list))
+    return feriados_string_list
+
+feriados_string_list = get_feriados_string_list()
+
+
 # make request to feriados api
 def is_feriado(fecha):
-    False
+    return(fecha in feriados_string_list)
 
 def is_fin_de_semana(fecha):
     weekday = datetime.strptime(fecha, "%d-%m-%Y").weekday()
@@ -26,6 +40,7 @@ def get_next_lunes(fecha):
     return next_lunes.strftime("%d-%m-%Y")
 
 def get_next_dia(fecha):
+    fecha = datetime.strptime(fecha, "%d-%m-%Y")
     return (fecha + timedelta(days=1)).strftime("%d-%m-%Y")
 
 def check_if_dia_is_habil(fecha):
