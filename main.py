@@ -217,7 +217,7 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
 summary_dataframe = pd.concat(proveedor_summary_dataframe_list)
 
 # drop unneeded columns
-unneeded_columns_list = ['Bloqueo de pago', 'Nombre del Proveedor', 'Nombre de Cliente','Clase de documento', 'Moneda del documento', 'Texto', 'Fecha compensación', 'Operación referencia', 'Doc.compensación']
+unneeded_columns_list = ['Bloqueo de pago', 'Nombre del Proveedor', 'Nombre de Cliente','Clase de documento', 'Moneda del documento', 'Fecha compensación', 'Operación referencia', 'Doc.compensación']
 for unneeded_column in unneeded_columns_list:
     proveedores_detail_df.drop(unneeded_column, inplace=True, axis=1)
 
