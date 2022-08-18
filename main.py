@@ -185,8 +185,8 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
 
     # check in resumen_provedor that all fechas_de_pago are valid
     # if a fecha_de_pago has passed, take se_paga and se_descuenta amounts and add them to the next valid fecha_de_pago
-    if(proveedor == 'KITCHEN CENTER SPA'):
-        resumen_provedor = update_resumen_proveedor(resumen_provedor)
+
+    resumen_provedor = update_resumen_proveedor(resumen_provedor)
 
     for fecha_de_pago, montos in resumen_provedor.items():
         monto_total_se_descuenta += montos['se_descuenta']
