@@ -115,7 +115,7 @@ def update_resumen_proveedor(resumen_proveedor):
     return new_resumen_proveedor
 
 current_year = date.today().year #para encontrar los feriados del año
-facturas_proveedores_df = pd.read_excel('proveedores-raw.xlsx', index_col=0)
+facturas_proveedores_df = pd.read_excel('Proveedores Xepelin PR001XEPELIN250822.xlsx', index_col=0)
 #response = r = requests.get('https://apis.digital.gob.cl/fl/feriados')
 #feriados_object = response.json()
 proveedores = facturas_proveedores_df['Nombre del Proveedor'].dropna().unique()
@@ -217,7 +217,7 @@ for proveedor, resumen_provedor in resumen_proveedores.items():
 summary_dataframe = pd.concat(proveedor_summary_dataframe_list)
 
 # drop unneeded columns
-unneeded_columns_list = ['Bloqueo de pago', 'Nombre del Proveedor', 'Nombre de Cliente','Clase de documento', 'Moneda del documento', 'Fecha compensación', 'Operación referencia', 'Doc.compensación']
+unneeded_columns_list = ['Bloqueo de pago', 'Nombre del Proveedor', 'Nombre de Cliente','Clase de documento','Vencimiento neto','Moneda del documento', 'Texto', 'Fecha compensación', 'Operación referencia', 'Doc.compensación']
 for unneeded_column in unneeded_columns_list:
     proveedores_detail_df.drop(unneeded_column, inplace=True, axis=1)
 
@@ -232,7 +232,7 @@ print(summary_dataframe)
 
 dfs = {'Sheet1': proveedores_detail_df, 'Resumen': summary_dataframe}
 
-writer = pd.ExcelWriter("Output Proveedores Xepelin.xlsx", engine='xlsxwriter')                
+writer = pd.ExcelWriter("Output Proveedores Xepelin PR001XEPELIN250822.xlsx", engine='xlsxwriter')                
 for sheetname, df in dfs.items():  # loop through `dict` of dataframes
     
     if(sheetname == 'Sheet1'):
