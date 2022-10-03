@@ -36,7 +36,7 @@ def calcular_fechas_de_pago():
     xls_input_filepath = f'{input_dir}/{xls_input_filename}'
     
     output_filename = 'Output ' + xls_input_filename
-    xls_output_filename = f'./output/{output_filename}.xlsx'
+    xls_output_filename = f'./output/{output_filename}'
 
     current_year = date.today().year #para encontrar los feriados del año
     facturas_proveedores_df = pd.read_excel(xls_input_filepath, index_col=0)
