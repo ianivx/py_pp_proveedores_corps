@@ -1,0 +1,9 @@
+*.xls
+*.xlsx
+input/*.xls
+input/*.xlsx
+output/*.xls
+output/*.xlsx
+__pycache__
+.pytest_cache
+.spyproject
