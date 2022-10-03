@@ -6,19 +6,40 @@ Created on Mon Aug  8 00:39:58 2022
 @author: ihojman
 """
 import pandas as pd
+import sys
+import os
+from pick import pick
 from datetime import date, datetime
 from pprint import pprint
 from utils.utils import *
 
-def calcular_fechas_de_pago(is_pyme):
+def calcular_fechas_de_pago():
+    input_dir = './input'
+    file_list_in_dir = os.listdir(input_dir)
 
-    input_filename = 'Proveedores Xepelin PR005XEPELIN250822'
-    output_filename = 'Output ' + input_filename
-    xls_input_filename = input_filename + '.xlsx'
-    xls_output_filename = output_filename + '.xlsx'
+    if len(file_list_in_dir) > 1:
+        print('hay más de un archivo en la carpeta "Input". Debe haber solo 1 archivo Excel.' )
+        sys.exit(1)
+    elif len(file_list_in_dir) < 1:
+        print('no hay un archivo Excel en la carpeta "Input". ')
+        sys.exit(1)
+
+
+    title = 'la nómina es para Pyme o para Proveedor? '
+    options = ['Pyme', 'Proveedor']
+    option, index = pick(options, title)
+    is_pyme = True if option == 'Pyme' else False
+    
+    xls_input_filename = file_list_in_dir[0]
+    
+    print(f'Procesando nómina para {option} - {xls_input_filename}')
+    xls_input_filepath = f'{input_dir}/{xls_input_filename}'
+    
+    output_filename = 'Output ' + xls_input_filename
+    xls_output_filename = f'./output/{output_filename}.xlsx'
 
     current_year = date.today().year #para encontrar los feriados del año
-    facturas_proveedores_df = pd.read_excel(xls_input_filename, index_col=0)
+    facturas_proveedores_df = pd.read_excel(xls_input_filepath, index_col=0)
     #response = r = requests.get('https://apis.digital.gob.cl/fl/feriados')
     #feriados_object = response.json()
     proveedores = facturas_proveedores_df['Nombre del Proveedor'].dropna().unique()
@@ -130,9 +151,6 @@ def calcular_fechas_de_pago(is_pyme):
     print(summary_dataframe)
     #summary_dataframe.to_excel('./resumen.xlsx', index=False)
 
-
-
-
     dfs = {'Sheet1': proveedores_detail_df, 'Resumen': summary_dataframe}
 
     writer = pd.ExcelWriter(xls_output_filename, engine='xlsxwriter')                
@@ -164,6 +182,6 @@ def calcular_fechas_de_pago(is_pyme):
                 worksheet.set_column(idx, idx, max_len)  # set column width
 
     # Close the pandas Excel Writer and output Excel File
-    writer.save()
+    writer.close()
 
-calcular_fechas_de_pago(True)
+calcular_fechas_de_pago()
